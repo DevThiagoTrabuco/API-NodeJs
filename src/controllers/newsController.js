@@ -59,9 +59,10 @@ export const findAll = async (req, res) => {
         ? `${currentUrl}?offSet=${previous}&limit=${limit}`
         : null;
 
-    if (news.length === 0) {
-      return res.status(400).send({ message: "Sem notícias publicadas" });
-    }
+    // if (news.length === 0) {
+    //   return res.status(400).send({ message: "Sem notícias publicadas" });
+    // }
+
     res.send({
       nextUrl,
       previousUrl,
