@@ -1,297 +1,139 @@
-import {
-  createService,
-  findAllService,
-  countService,
-  findLastService,
-  findByIdService,
-  searchByTitleService,
-  searchByUserService,
-  updateService,
-  eraseService,
-  likeNewsService,
-  dislikeNewsService,
-  addCommentService,
-  removeCommentService,
-} from "../services/newsService.js";
+import newsService from "../services/newsService.js";
 
-export const create = async (req, res) => {
+const createController = async (req, res) => {
+  const { title, text, banner } = req.body;
+  const userId = req.userId;
+
   try {
-    const { title, text, banner } = req.body;
-    if (!title || !text || !banner) {
-      return res.status(400).send({ message: "Preencha todos os campos" });
-    }
-
-    await createService({
-      title,
-      text,
-      banner,
-      user: req.userId,
-    });
-
-    res.status(201).send({ message: "Notícia publicada com sucesso!" });
+    const news = await newsService.createService(req.body, req.userId);
+    return res.status(201).send(news);
   } catch (err) {
     return res.status(500).send({ message: err.message });
   }
 };
 
-export const findAll = async (req, res) => {
+const findAllController = async (req, res) => {
+  const { offSet, limit } = req.query;
+  const currentUrl = req.baseUrl;
   try {
-    let { limit, offSet } = req.query;
-    limit = Number(limit);
-    offSet = Number(offSet);
-
-    if (!limit || !offSet) {
-      limit = 5;
-      offSet = 0;
-    }
-
-    const news = await findAllService(offSet, limit);
-    const total = await countService();
-    const currentUrl = req.baseUrl;
-
-    const next = offSet + limit;
-    const nextUrl =
-      next < total ? `${currentUrl}?offSet=${next}&limit=${limit}` : null;
-
-    const previous = offSet - limit < 0 ? null : offSet - limit;
-    const previousUrl =
-      previous !== null
-        ? `${currentUrl}?offSet=${previous}&limit=${limit}`
-        : null;
-
-    // if (news.length === 0) {
-    //   return res.status(400).send({ message: "Sem notícias publicadas" });
-    // }
-
-    res.send({
-      nextUrl,
-      previousUrl,
-      limit,
-      offSet,
-      total,
-      results: news.map((newsItem) => ({
-        id: newsItem._id,
-        title: newsItem.title,
-        text: newsItem.text,
-        banner: newsItem.banner,
-        likes: newsItem.likes,
-        comments: newsItem.comments,
-        name: newsItem.user.name,
-        username: newsItem.user.username,
-        avatar: newsItem.user.avatar,
-      })),
-    });
+    const news = await newsService.findAllService(offSet, limit, currentUrl);
+    return res.send(news);
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
 };
 
-export const findLast = async (req, res) => {
+const findLastController = async (req, res) => {
   try {
-    const news = await findLastService();
-
-    if (!news) {
-      return res.status(404).send({ message: "Nenhuma notícia encontrada" });
-    }
-
-    res.send({
-      news: {
-        id: news._id,
-        title: news.title,
-        text: news.text,
-        banner: news.banner,
-        likes: news.likes,
-        comments: news.comments,
-        name: news.user.name,
-        username: news.user.username,
-        avatar: news.user.avatar,
-      },
-    });
+    const news = await newsService.findLastService();
+    return res.send(news);
   } catch (error) {
     res.status(500).send({ message: err.message });
   }
 };
 
-export const findById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const news = await findByIdService(id);
+const findByIdController = async (req, res) => {
+  const { id } = req.params;
 
-    res.send({
-      news: {
-        id: news._id,
-        title: news.title,
-        text: news.text,
-        banner: news.banner,
-        likes: news.likes,
-        comments: news.comments,
-        name: news.user.name,
-        username: news.user.username,
-        avatar: news.user.avatar,
-      },
-    });
+  try {
+    const news = await newsService.findByIdService(id);
+    return res.send(news);
+  } catch (err) {
+    return res.status(404).send({ message: err.message });
+  }
+};
+
+const searchByTitleController = async (req, res) => {
+  const { title } = req.query;
+
+  try {
+    const news = await newsService.searchByTitleService(title);
+    return res.send(news);
   } catch (err) {
     return res.status(500).send({ message: err.message });
   }
 };
 
-export const searchByTitle = async (req, res) => {
+const searchByUserController = async (req, res) => {
+  const id = req.userId;
+
   try {
-    const { search } = req.query;
-    const news = await searchByTitleService(search);
-
-    if (!search) {
-      return res.status(400).send({ message: "Não é possível buscar" });
-    }
-
-    if (news.lenght === 0) {
-      return res
-        .status(404)
-        .send({ message: "Nenhuma notícia encontrada com este título" });
-    }
-
-    res.send({
-      results: news.map((item) => ({
-        id: item._id,
-        title: item.title,
-        text: item.text,
-        banner: item.banner,
-        likes: item.likes,
-        comments: item.comments,
-        name: item.user.name,
-        username: item.user.username,
-        avatar: item.user.avatar,
-      })),
-    });
+    const news = await newsService.searchByUserService(id);
+    return res.send(news);
   } catch (err) {
     return res.status(500).send({ message: err.message });
   }
 };
 
-export const searchByUser = async (req, res) => {
+const updateController = async (req, res) => {
+  const { title, text, banner } = req.body;
+  const { id } = req.params;
+  const userId = req.userId;
   try {
-    const id = req.userId;
-    const news = await searchByUserService(id);
-
-    res.send({
-      results: news.map((item) => ({
-        id: item._id,
-        title: item.title,
-        text: item.text,
-        banner: item.banner,
-        likes: item.likes,
-        comments: item.comments,
-        name: item.user.name,
-        username: item.user.username,
-        avatar: item.user.avatar,
-      })),
-    });
+    await newsService.updateService(id, title, text, banner, userId);
+    return res.send({ message: "Notícia atualizada com sucesso!" });
   } catch (err) {
     return res.status(500).send({ message: err.message });
   }
 };
 
-export const update = async (req, res) => {
+const eraseController = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.userId;
+
   try {
-    const { title, text, banner } = req.body;
-    const { id } = req.params;
-
-    if (!title && !text && !banner) {
-      return res.status(400).send({ message: "Altere pelo menos um campo" });
-    }
-
-    const news = await findByIdService(id);
-
-    if (String(news.user._id) !== String(req.userId)) {
-      return res
-        .status(401)
-        .send({ message: "Você não tem permissão para alterar essa notícia" });
-    }
-
-    await updateService(id, title, text, banner);
-
-    res.send({ message: "Notícia atualizada com sucesso!" });
+    await newsService.eraseService(id, userId);
+    return res.send({ message: "Notícia excluída com sucesso!" });
   } catch (err) {
     return res.status(500).send({ message: err.message });
   }
 };
 
-export const erase = async (req, res) => {
+const likeController = async (req, res) => {
+  const { id: idNews } = req.params;
+  const userId = req.userId;
   try {
-    const { id } = req.params;
-
-    const news = await findByIdService(id);
-    if (String(news.user._id) !== String(req.userId)) {
-      return res
-        .status(401)
-        .send({ message: "Você não tem permissão para alterar essa notícia" });
-    }
-
-    await eraseService(id);
-
-    res.send({ message: "Notícia excluída com sucesso!" });
+    const response = await newsService.likeNewsService(idNews, userId);
+    return res.send(response);
   } catch (err) {
     return res.status(500).send({ message: err.message });
   }
 };
 
-export const like = async (req, res) => {
+const addCommentController = async (req, res) => {
+  const { id: idNews } = req.params;
+  const userId = req.userId;
+  const { comment } = req.body;
   try {
-    const { id } = req.params;
-    const userId = req.userId;
-
-    const newsLiked = await likeNewsService(id, userId);
-    if (!newsLiked) {
-      await dislikeNewsService(id, userId);
-      return res.send({ message: "Curtida removida" });
-    }
-
-    res.send({ message: "Curtida adicionada" });
+    await newsService.addCommentService(idNews, userId, comment);
+    return res.send({ message: "Comentário adicionado" });
   } catch (err) {
     return res.status(500).send({ message: err.message });
   }
 };
 
-export const addComment = async (req, res) => {
+const removeCommentController = async (req, res) => {
+  const { idNews, idComment } = req.params;
+  const userId = req.userId;
+
   try {
-    const { id } = req.params;
-    const userId = req.userId;
-    const { comment } = req.body;
-
-    if (!comment) {
-      return res.status(400).send({ message: "Insira um comentário" });
-    }
-
-    await addCommentService(id, userId, comment);
-
-    res.send({ message: "Comentário adicionado" });
+    await newsService.removeCommentService(idNews, idComment, userId);
+    return res.send({ message: "Comentário removido" });
   } catch (err) {
     return res.status(500).send({ message: err.message });
   }
 };
 
-export const removeComment = async (req, res) => {
-  try {
-    const { idNews, idComment } = req.params;
-    const userId = String(req.userId);
-    
-    const removedComment = await removeCommentService(idNews, idComment, userId);
-    const commentCatcher = removedComment.comments.find(
-      (comment) => comment.idComment === idComment
-    );
-
-    if (!commentCatcher) {
-      return res.status(404).send({ message: "Comentário não encontrado" });
-    }
-
-    if (commentCatcher.userId !== userId) {
-      return res
-        .status(401)
-        .send({ message: "Você não tem permissão para remover este comentário" });
-    }
-
-    res.send({ message: "Comentário removido" });
-  } catch (err) {
-    return res.status(500).send({ message: err.message });
-  }
-};
+export default {
+  createController,
+  findAllController,
+  findLastController,
+  findByIdController,
+  searchByTitleController,
+  searchByUserController,
+  updateController,
+  eraseController,
+  likeController,
+  addCommentController,
+  removeCommentController,
+}
