@@ -38,6 +38,8 @@ async function findAllService(offSet, limit, currentUrl) {
       ? `${currentUrl}?offSet=${previous}&limit=${limit}`
       : null;
 
+  news.shift();
+
   return {
     nextUrl,
     previousUrl,
