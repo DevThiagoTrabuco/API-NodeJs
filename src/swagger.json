@@ -70,10 +70,11 @@
         }
       }
     },
-    "/user/{id}": {
+    "/user/findById/{id}": {
       "get": {
         "summary": "Busca usuário por ID",
         "tags": ["Users"],
+        "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
             "name": "id",
@@ -86,10 +87,13 @@
           "200": { "description": "Usuário encontrado" },
           "400": { "description": "Usuário não encontrado" }
         }
-      },
+      }
+    },
+    "/user/update/{id}": {
       "patch": {
         "summary": "Atualiza usuário",
         "tags": ["Users"],
+        "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
             "name": "id",
@@ -180,7 +184,7 @@
         }
       }
     },
-    "/news/{id}": {
+    "/news/findById/{id}": {
       "get": {
         "summary": "Busca notícia por ID",
         "tags": ["News"],
@@ -194,9 +198,12 @@
           }
         ],
         "responses": {
-          "200": { "description": "Notícia encontrada" }
+          "200": { "description": "Notícia encontrada" },
+          "400": { "description": "Notícia não encontrada" }
         }
-      },
+      }
+    },
+    "/news/update/{id}": {
       "patch": {
         "summary": "Atualiza notícia",
         "tags": ["News"],
@@ -213,14 +220,18 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/News" }
+              "schema": {
+                "$ref": "#/components/schemas/News"
+              }
             }
           }
         },
         "responses": {
           "200": { "description": "Notícia atualizada com sucesso" }
         }
-      },
+      }
+    },
+    "/news/delete/{id}": {
       "delete": {
         "summary": "Remove notícia",
         "tags": ["News"],
